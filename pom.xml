@@ -1,0 +1,58 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>jmeter-project</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <jmeter.version>5.5</jmeter.version> <!-- Use the latest stable JMeter version -->
+    </properties>
+
+    <dependencies>
+        <!-- JMeter Dependencies -->
+        <dependency>
+            <groupId>org.apache.jmeter</groupId>
+            <artifactId>ApacheJMeter_core</artifactId>
+            <version>${jmeter.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jmeter</groupId>
+            <artifactId>ApacheJMeter_http</artifactId>
+            <version>${jmeter.version}</version>
+        </dependency>
+        <!-- Additional JMeter dependencies as required -->
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Maven JMeter Plugin -->
+            <plugin>
+                <groupId>com.lazerycode.jmeter</groupId>
+                <artifactId>jmeter-maven-plugin</artifactId>
+                <version>3.6.0</version> <!-- Or the latest version -->
+                <executions>
+                    <execution>
+                        <id>jmeter-tests</id>
+                        <goals>
+                            <goal>jmeter</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <testFilesDirectory>src/test/jmeter</testFilesDirectory>
+                    <resultsDirectory>target/jmeter/results</resultsDirectory>
+                    <resultsFileFormat>xml</resultsFileFormat>
+                    <jmeterExtensions>
+                        <!-- You can add additional JMeter plugins here -->
+                    </jmeterExtensions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
