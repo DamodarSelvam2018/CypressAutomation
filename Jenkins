@@ -1,0 +1,51 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the code from your SCM
+                git 'https://github.com/your-repo/jmeter-tests.git'
+            }
+        }
+
+        stage('Run JMeter Tests') {
+            steps {
+                script {
+                    // Assuming JMeter is installed and accessible in the Jenkins environment
+                    sh '''
+                        jmeter -n -t test-plan.jmx -l test-results.jtl -e -o jmeter-report
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Publish JMeter reports using the Performance plugin or other available plugins like JMeter-Plugin
+            step([$class: 'PerformancePublisher',
+                  sourceDataFiles: 'test-results.jtl',
+                  errorFailedThreshold: 0, // Adjust according to failure criteria
+                  errorUnstableThreshold: 0,
+                  relativeFailedThresholdPositive: '10', // Set threshold for relative performance
+                  relativeFailedThresholdNegative: '10',
+                  failureNewThreshold: '0',
+                  failurePercentageThreshold: '0',
+                  unstableNewThreshold: '0',
+                  unstablePercentageThreshold: '0',
+                  modeOfThreshold: true,
+                  compareBuildPrevious: true
+            ])
+
+            // Optional: Archive the JMeter HTML report
+            archiveArtifacts artifacts: 'jmeter-report/**', allowEmptyArchive: true
+        }
+        failure {
+            // Handle failure notification or additional logging
+            mail to: 'youremail@example.com',
+                 subject: "JMeter Load Test Failed",
+                 body: "Please check the Jenkins job for details."
+        }
+    }
+}
