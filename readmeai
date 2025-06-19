@@ -1,0 +1,94 @@
+Readme
+
+# Gemini-Powered UI Automation Framework
+
+This repository contains a Playwright-based UI testing framework augmented with Google's Gemini model via Vertex AI. It supports traditional `pytest` tests, AI-generated selectors, and LLM-directed execution through LangChain.
+
+---
+
+## 📁 Project Structure
+
+```
+ai_ui_test_framework/
+├── src/
+│   ├── ai_adk/              # AI selector and MCP agent logic
+│   ├── pages/               # Page Object Models
+│   ├── tests/               # Pytest test cases
+│   ├── utils/               # Config, fixtures, reporting
+│   └── features/            # Cucumber feature files and steps
+├── ci/                      # CI/CD config
+├── requirements.txt
+└── vertex_prompt_schema.yaml
+```
+
+---
+
+## 🧪 Features
+- AI-enhanced selector generation using Google AI ADK
+- Gemini-pro LLM via LangChain to control browser actions
+- Dual-mode testing: `pytest` and `behave` (Cucumber-style)
+- Screenshot capture on failure
+- Cloud-native ready (Vertex AI, GCP BigQuery logging supported)
+
+---
+
+## 🔧 Setup Instructions
+
+### 1. Create and activate a virtual environment
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+### 2. Install dependencies
+```bash
+pip install -r requirements.txt
+playwright install
+```
+
+### 3. Set Vertex AI credentials
+Export your service account key:
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS="path/to/your-service-account.json"
+```
+
+### 4. Run tests
+- Standard Pytest:
+```bash
+pytest src/tests
+```
+- Cucumber-style (Behave):
+```bash
+behave src/features
+```
+
+---
+
+## 💡 Example: Natural Language Test (Gemini LLM)
+
+```python
+from ai_adk.mcp_agent import MCPBrowserController
+
+def test_login_mcp(page):
+    mcp = MCPBrowserController(page)
+    output = mcp.run(
+        "Go to https://example.com/login. "
+        "Fill username => testuser. "
+        "Fill password => pass123. "
+        "Click on the login button."
+    )
+    assert page.url.endswith("/dashboard"), f"Failed: {output}"
+```
+
+---
+
+## ✅ Requirements
+- Python 3.9+
+- Playwright
+- Google Cloud credentials with Vertex AI access
+- Gemini model enabled in Vertex AI (via LangChain)
+
+---
+
+## 📬 Questions?
+Contact the framework author or submit an issue for help extending Gemini capabilities or configuring CI/CD with Cloud Build.
