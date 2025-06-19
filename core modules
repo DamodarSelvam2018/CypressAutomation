@@ -1,0 +1,98 @@
+# src/utils/config.py
+import os
+from pydantic import BaseSettings
+
+class TestConfig(BaseSettings):
+    vertex_project: str = os.getenv("VERTEX_PROJECT", "your-project-id")
+    ai_adk_model: str = "google/ai-adk-selector-v1"
+    playwright_headless: bool = True
+
+config = TestConfig()
+
+
+# src/utils/playwright_fixture.py
+import pytest
+from playwright.sync_api import sync_playwright
+from utils.config import config
+
+@pytest.fixture(scope="session")
+def browser():
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=config.playwright_headless)
+        yield browser
+        browser.close()
+
+@pytest.fixture
+def page(browser):
+    context = browser.new_context()
+    page = context.new_page()
+    yield page
+    context.close()
+
+
+# src/utils/reporting.py
+def log_failure(page, test_name: str):
+    page.screenshot(path=f"screenshots/{test_name}.png")
+    print(f"[FAIL] {test_name} – Title: {page.title()}")
+
+
+# src/pages/base_page.py
+class BasePage:
+    def __init__(self, page):
+        self.page = page
+
+    def goto(self, url: str):
+        self.page.goto(url)
+
+    def ai_click(self, selector: str):
+        self.page.click(selector)
+
+
+# src/pages/login_page.py
+from pages.base_page import BasePage
+from ai_adk.selector_ai import get_ai_selector
+
+class LoginPage(BasePage):
+    def goto_login(self):
+        self.goto("https://example.com/login")
+
+    def login(self, username: str, password: str):
+        html = self.page.content()
+        user_sel = get_ai_selector(html, "username input")
+        pass_sel = get_ai_selector(html, "password input")
+        self.page.fill(user_sel, username)
+        self.page.fill(pass_sel, password)
+        self.ai_click("login button")
+
+
+# src/tests/test_login.py
+def test_login_success(page):
+    from pages.login_page import LoginPage
+    lp = LoginPage(page)
+    lp.goto_login()
+    lp.login("testuser", "pass123")
+    assert page.url.endswith("/dashboard")
+
+
+def test_login_mcp(page):
+    from ai_adk.mcp_agent import MCPBrowserController
+    mcp = MCPBrowserController(page)
+    output = mcp.run(
+        "Go to https://example.com/login. "
+        "Fill username => testuser. "
+        "Fill password => pass123. "
+        "Click on the login button."
+    )
+    assert page.url.endswith("/dashboard"), f"Failed: {output}"
+
+
+# src/ai_adk/selector_ai.py
+from google.cloud import aiplatform
+from utils.config import config
+
+aiplatform.init(project=config.vertex_project)
+
+def get_ai_selector(page_html: str, element_name: str) -> str:
+    endpoint = aiplatform.Endpoint("projects/.../locations/us-central1/endpoints/AI_ADK_SELECTOR")
+    prediction = endpoint.predict({"instances": [{"html": page_html, "element": element_name}]})
+    return prediction.predictions[0]["selector"]
