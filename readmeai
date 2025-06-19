@@ -45,6 +45,9 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 playwright install
 ```
+pip install pytest playwright pydantic behave \
+    google-cloud-aiplatform google-cloud-bigquery \
+    langchain
 
 ### 3. Set Vertex AI credentials
 Export your service account key:
