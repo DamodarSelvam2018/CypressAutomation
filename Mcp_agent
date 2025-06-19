@@ -1,0 +1,41 @@
+# src/ai_adk/mcp_agent.py
+
+from langchain.chat_models import ChatVertexAI
+from langchain.agents import Tool, initialize_agent
+from langchain.agents.agent_types import AgentType
+from playwright.sync_api import Page
+
+class MCPBrowserController:
+    def __init__(self, page: Page):
+        self.page = page
+        self.agent = self._build_agent()
+
+    def _build_agent(self):
+        llm = ChatVertexAI(model_name="gemini-pro", temperature=0.1)
+        tools = [
+            Tool(name="navigate", func=self.navigate, description="Navigate to a URL"),
+            Tool(name="click", func=self.click, description="Click on an element using selector"),
+            Tool(name="fill", func=self.fill, description="Fill an input field with a value")
+        ]
+        return initialize_agent(
+            tools,
+            llm,
+            agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+            verbose=True
+        )
+
+    def navigate(self, url: str):
+        self.page.goto(url)
+        return f"Navigated to {url}"
+
+    def click(self, selector: str):
+        self.page.click(selector)
+        return f"Clicked {selector}"
+
+    def fill(self, args: str):
+        selector, value = args.split("=>")
+        self.page.fill(selector.strip(), value.strip())
+        return f"Filled {selector} with {value}"
+
+    def run(self, prompt: str):
+        return self.agent.run(prompt)
